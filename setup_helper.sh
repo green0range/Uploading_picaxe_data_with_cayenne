@@ -53,6 +53,11 @@ else
 		echo "Capenne uploader will have to be started manually after rebooting."
 	fi
 fi
+# install the cayenne library
+git clone https://github.com/green0range/Cayenne-MQTT-Python.git
+cd Cayenne-MQTT-Python
+python setup.py install
+
 # after complete check for reboot
 if [ "$REBOOT_REQUIRED" == "y" ]; then
 	echo "You need to reboot for changes to take effect. Reboot now? (Y,n)"
