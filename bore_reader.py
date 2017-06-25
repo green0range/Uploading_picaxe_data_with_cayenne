@@ -40,7 +40,7 @@ def get_mqtt_config():
 		print "ERROR: Missing variables in config file. Please run setup script."
 		return 0,0,0,0,0
 
-def intrupret_raw_data(data):
+def interpret_raw_data(data):
 	# Modify this to model the data
 	data_unit = "RAW" # change this to the unit.
 	data_type = "Water Level" # change this to whatever is being measured
@@ -56,7 +56,7 @@ def process_data(data_string):
 		if "Instrument" in data_array[i]:
 			instrument_reading.append(data_array[i].split(" ")[1])
 		if "Reading" in data_array[i]:
-			instrument_reading.append(intrupret_raw_data(data_array[i].split(" ")[2].split("\r")[0]))
+			instrument_reading.append(interpret_raw_data(data_array[i].split(" ")[2].split("\r")[0]))
 	client.virtualWrite(instrument_reading[0],instrument_reading[1][0],dataType=instrument_reading[1][1],dataUnit=instrument_reading[1][2])
 
 # Start mqtt Client
