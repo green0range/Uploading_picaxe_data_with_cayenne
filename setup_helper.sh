@@ -27,6 +27,17 @@ if ["$PORT" == ""]; then
 	PORT="1883"
 fi
 echo "MQTT_USERNAME="$MQTT_U > mqtt.conf
+echo "Do you need to enable a work around? |Enable if port 1883 is blocked| (N/y)"
+read WORKAROUND
+if [ "$WORKAROUND" == "y" ]; then
+	echo "Work around URL? (https://greenorange.space/resources/tahuna_iot/port_workaround.php)"
+	read WAURL
+	if ["$WAURL" == ""]; then
+		WAURL = "https://greenorange.space/resources/tahuna_iot/port_workaround.php"
+	fi
+	echo "enable-workaround=1" >> mqtt.conf
+	echo "workaround-url=$WAURL" >> mqtt.conf
+fi
 echo "MQTT_PASSWORD="$MQTT_P >> mqtt.conf
 echo "CLIENT_ID="$CLIENT >> mqtt.conf
 echo "MQTT_SERVER="$SERVER >> mqtt.conf
@@ -62,10 +73,10 @@ python setup.py install
 if [ "$REBOOT_REQUIRED" == "y" ]; then
 	echo "You need to reboot for changes to take effect. Reboot now? (Y,n)"
 	read REBOOT
-	if [ "REBOOT" == "y" ]; then
+	if [ "$REBOOT" == "y" ]; then
 		reboot
 	fi
-	if [ "REBOOT" == "Y" ]; then
+	if [ "$REBOOT" == "Y" ]; then
 		reboot
 	fi
 	echo "Okay, not rebooting. Please reboot manually before trying to use this new setup."

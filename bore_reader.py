@@ -3,6 +3,11 @@
 import serial
 import cayenne.client as cayenne
 import time
+import urllib2
+
+
+e_wa = 0 # Enable workaround ?
+wa_url = "" # url for work around
 
 def on_message(message):
 	print "Server Message: " + message
@@ -17,6 +22,7 @@ def on_connect(client,userdata,flags,rc):
 	print "Connected with result code " + str(rc)
 
 def get_mqtt_config():
+	global e_wa, wa_url
 	try:
 		f = open("mqtt.conf", "r")
 		config = f.read().split("\n")
@@ -32,6 +38,10 @@ def get_mqtt_config():
 				mqtt_server = config[i].split("=")[1]
 			if "MQTT_PORT" in config[i]:
 				mqtt_port = config[i].split("=")[1]
+			if "enable-workaround" in config[i]:
+				e_wa = config[i].split("=")[1]
+			if "workaround-url" in config[i]:
+				wa_url = config[i].split("=")[1]
 	except:
 		print "ERROR: mqtt.config does not exist or cannot be accessed. Please run setup script."
 	try:
@@ -47,6 +57,12 @@ def interpret_raw_data(data):
 	corrected_data = data # insert formula to correct data
 	return corrected_data, data_type, data_unit
 	
+def send_via_work_around(channel, data, type, unit):
+	login_detail = get_mqtt_config()
+	url = wa_url + "?username=" + login_detail[0] + "&password=" + login_detail[1]
+	url += url + "&client=" + login_detail[2] + "&channel=" + channel + "&data=" + data
+	url += url + "&units=" + unit + "&type=" + type
+	urllib2.urlopen(url) 
 
 def process_data(data_string):
 	global client
@@ -57,18 +73,21 @@ def process_data(data_string):
 			instrument_reading.append(data_array[i].split(" ")[1])
 		if "Reading" in data_array[i]:
 			instrument_reading.append(interpret_raw_data(data_array[i].split(" ")[2].split("\r")[0]))
-	client.virtualWrite(instrument_reading[0],instrument_reading[1][0],dataType=instrument_reading[1][1],dataUnit=instrument_reading[1][2])
-
+	if e_wa==0:
+		client.virtualWrite(instrument_reading[0],instrument_reading[1][0],dataType=instrument_reading[1][1],dataUnit=instrument_reading[1][2])
+	elif e_wa==1:
+		send_via_work_around(instrument_reading[0],instrument_reading[1][0],instrument_reading[1][1],instrument_reading[1][2])
+	
 # Start mqtt Client
 login_detail = get_mqtt_config()
-client = cayenne.CayenneMQTTClient()
-client.on_connect = on_connect
-client.on_message = on_message
-client.begin(login_detail[0],login_detail[1],login_detail[2])
+if e_wa == 0:
+	client = cayenne.CayenneMQTTClient()
+	client.on_connect = on_connect
+	client.on_message = on_message
+	client.begin(login_detail[0],login_detail[1],login_detail[2])
 
 while 1:
 	data = serial_data("/dev/serial0", 2400)
-	client.loop()
-	client.virtualWrite("A","42",dataType="test",dataUnit="testings")
+	if e_wa == 0: client.loop()
 	if data != "":
 		process_data(data)
