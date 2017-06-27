@@ -9,6 +9,7 @@ import os
 
 e_wa = 0 # Enable workaround ?
 wa_url = "" # url for work around
+enable_cayenne = 1 # Encase cayenne stops working, it can be disable for reverting to CSV
 
 def save_csv(data):
 	try:
@@ -37,7 +38,7 @@ def on_connect(client,userdata,flags,rc):
 	print "Connected with result code " + str(rc)
 
 def get_mqtt_config():
-	global e_wa, wa_url
+	global e_wa, wa_url, enable_cayenne
 	try:
 		f = open("mqtt.conf", "r")
 		config = f.read().split("\n")
@@ -57,6 +58,8 @@ def get_mqtt_config():
 				e_wa = int(config[i].split("=")[1])
 			if "workaround-url" in config[i]:
 				wa_url = config[i].split("=")[1]
+			if "enable-cayenne" in config[i]:
+				enable_cayene = config[i].split("=")[1]
 	except:
 		print "ERROR: mqtt.config does not exist or cannot be accessed. Please run setup script."
 	try:
@@ -81,7 +84,7 @@ def send_via_work_around(channel, data, type, unit):
 	urllib2.urlopen(url) 
 
 def process_data(data_string):
-	global client
+	global client, e_wa, enable_cayenne
 	data_array = data_string.split("\t")
 	instrument_reading = []
 	for i in range(0,len(data_array)):
@@ -90,7 +93,7 @@ def process_data(data_string):
 		if "Reading" in data_array[i]:
 			instrument_reading.append(interpret_raw_data(data_array[i].split(" ")[2].split("\r")[0]))
 	try:
-		if e_wa==0:
+		if ((e_wa == 0) and (enable_cayenne)):
 			client.virtualWrite(instrument_reading[0],instrument_reading[1][0],dataType=instrument_reading[1][1],dataUnit=instrument_reading[1][2])
 		else:
 			send_via_work_around(instrument_reading[0],instrument_reading[1][0],instrument_reading[1][1],instrument_reading[1][2])
@@ -111,7 +114,7 @@ if e_wa == 0:
 
 while 1:
 	data = serial_data("/dev/serial0", 2400)
-	if e_wa == 0: client.loop()
+	if ((e_wa == 0) and (enable_cayenne)): client.loop()
 	#client.virtualWrite("TESTING",23242)
 	if data != "":
 		process_data(data)
