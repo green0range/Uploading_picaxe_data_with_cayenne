@@ -56,7 +56,8 @@ if [ "$AUTOSTART" == "y" ]; then
 else
 	if [ "$AUTOSTART" == "Y" ]; then
 		echo "#! /bin/bash" > /etc/init.d/cayenne_autostart.sh
-		echo "$(pwd)/bore_reader.py" >> /etc/init.d/cayenne_autostart.sh
+		echo "$(pwd)" >> /etc/init.d/cayenne_autostart.sh
+		echo "./bore_reader.py" >> /etc/init.d/cayenne_autostart.sh
 		chmod 755 /etc/init.d/cayenne_autostart.sh
 		update-rc.d cayenne_autostart.sh defaults
 		echo "Cayenne uploader will now start automatically on boot."
