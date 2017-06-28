@@ -48,15 +48,18 @@ cat mqtt.conf
 echo "Would you like to set Cayenne Uploader to start automatically on boot? (Y,n)"
 read AUTOSTART
 if [ "$AUTOSTART" == "y" ]; then
+	sudo usermod -a -G dialout pi
 	echo "#! /bin/bash" > /etc/init.d/cayenne_autostart.sh
-	echo "$(pwd)/bore_reader.py" >> /etc/init.d/cayenne_autostart.sh
+	echo "cd $(pwd)" >> /etc/init.d/cayenne_autostart.sh
+	echo "./bore_reader.py" >> /etc/init.d/cayenne_autostart.sh
 	chmod 755 /etc/init.d/cayenne_autostart.sh
 	update-rc.d cayenne_autostart.sh defaults
 	echo "Cayenne uploader will now start automatically on boot."
 else
 	if [ "$AUTOSTART" == "Y" ]; then
+		sudo usermod -a -G dialout pi
 		echo "#! /bin/bash" > /etc/init.d/cayenne_autostart.sh
-		echo "$(pwd)" >> /etc/init.d/cayenne_autostart.sh
+		echo "cd $(pwd)" >> /etc/init.d/cayenne_autostart.sh
 		echo "./bore_reader.py" >> /etc/init.d/cayenne_autostart.sh
 		chmod 755 /etc/init.d/cayenne_autostart.sh
 		update-rc.d cayenne_autostart.sh defaults
